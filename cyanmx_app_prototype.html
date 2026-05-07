@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyan MX — Student App Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #050F1A;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Header */
+  .header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    z-index: 100;
+  }
+  .brand { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #0FBCD4; letter-spacing: -0.5px; }
+  .screen-counter { font-size: 13px; color: rgba(255,255,255,0.3); letter-spacing: 0.05em; }
+
+  /* Stage */
+  .stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    padding: 80px 48px;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  /* Nav arrows */
+  .nav-arrow {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: rgba(255,255,255,0.4);
+    font-size: 20px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .nav-arrow:hover { border-color: #0FBCD4; color: #0FBCD4; background: rgba(15,188,212,0.08); }
+  .nav-arrow.disabled { opacity: 0.2; pointer-events: none; }
+
+  /* Phone frame */
+  .phone-wrap { position: relative; }
+  .phone {
+    width: 300px;
+    height: 600px;
+    background: #0A2540;
+    border-radius: 44px;
+    padding: 14px;
+    box-shadow: 0 0 0 1px rgba(15,188,212,0.15), 0 40px 80px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+  }
+  .phone::before {
+    content: '';
+    position: absolute;
+    top: 16px; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 5px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 4px;
+    z-index: 10;
+  }
+  .phone-inner {
+    width: 100%; height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Glow effect under phone */
+  .phone-glow {
+    position: absolute;
+    bottom: -40px; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 40px;
+    background: radial-gradient(ellipse, rgba(15,188,212,0.2) 0%, transparent 70%);
+    filter: blur(10px);
+  }
+
+  /* Screen info */
+  .screen-info {
+    text-align: center;
+    max-width: 360px;
+    flex: 1;
+  }
+  .screen-number {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: #0FBCD4;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .screen-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .screen-desc {
+    font-size: 15px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+  .feature-list { list-style: none; text-align: left; }
+  .feature-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .feature-list li:last-child { border-bottom: none; }
+  .feat-dot { width: 6px; height: 6px; border-radius: 50%; background: #0FBCD4; flex-shrink: 0; }
+
+  /* Dots navigation */
+  .dots {
+    position: fixed;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 8px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .dot.active { background: #0FBCD4; width: 24px; border-radius: 4px; }
+
+  /* Hint */
+  .hint {
+    position: fixed;
+    bottom: 60px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* Transition */
+  .phone-wrap { transition: opacity 0.3s, transform 0.3s; }
+  .phone-wrap.fade-out { opacity: 0; transform: translateY(12px); }
+
+  /* ─── SCREEN 1: Subscription ─────────────────────────────────────────── */
+  .s1 {
+    background: linear-gradient(165deg, #0A2540 0%, #0D3461 100%);
+    height: 100%;
+    padding: 32px 16px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .s1-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: #0FBCD4; text-align: center; margin-bottom: 4px; }
+  .s1-tagline { font-size: 10px; color: rgba(255,255,255,0.35); text-align: center; margin-bottom: 22px; letter-spacing: 0.05em; }
+  .s1-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+  .plan {
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .plan-basic { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
+  .plan-std { background: rgba(15,188,212,0.12); border: 1.5px solid #0FBCD4; }
+  .plan-prem { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
+  .plan-badge {
+    position: absolute;
+    top: -8px; right: 12px;
+    font-size: 9px; font-weight: 700;
+    color: #0A2540;
+    background: #0FBCD4;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.04em;
+  }
+  .plan-row { display: flex; justify-content: space-between; align-items: center; }
+  .plan-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: #fff; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: #0FBCD4; }
+  .plan-price span { font-size: 10px; color: rgba(255,255,255,0.35); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+  .plan-desc { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+  .s1-btn {
+    margin-top: auto;
+    background: #0FBCD4;
+    color: #0A2540;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  /* ─── SCREEN 2: Map ──────────────────────────────────────────────────── */
+  .s2 { background: #F0F4F8; height: 100%; display: flex; flex-direction: column; }
+  .s2-header { background: #0A2540; padding: 32px 14px 12px; }
+  .s2-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: #0FBCD4; margin-bottom: 8px; }
+  .s2-search {
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .s2-legend {
+    background: #fff;
+    padding: 8px 14px;
+    display: flex; gap: 14px;
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 9px; color: #64748B; }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .s2-map {
+    flex: 1;
+    background: #E8F4F8;
+    position: relative;
+    overflow: hidden;
+  }
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(15,188,212,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(15,188,212,0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .map-road { position: absolute; background: rgba(15,188,212,0.2); border-radius: 2px; }
+  .map-pin {
+    position: absolute;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transform: translate(-50%, -50%);
+  }
+  .pin-charge { background: #F59E0B; }
+  .pin-bike { background: #10B981; }
+  .pin-user { background: #185FA5; border: 2px solid white; font-size: 9px; }
+  .map-popup {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    background: #0A2540;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 10px;
+    color: #0FBCD4;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .s2-bottom { background: #fff; padding: 10px 14px; }
+  .s2-section-title { font-size: 9px; font-weight: 700; color: #0A2540; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .nearby-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #F1F5F9;
+  }
+  .nearby-item:last-child { border-bottom: none; }
+  .nearby-name { font-size: 10px; font-weight: 600; color: #0A2540; }
+  .nearby-sub { font-size: 9px; color: #94A3B8; margin-top: 1px; }
+  .nearby-avail { font-size: 10px; font-weight: 700; color: #10B981; }
+
+  /* ─── SCREEN 3: Dashboard ────────────────────────────────────────────── */
+  .s3 {
+    background: #0A2540;
+    height: 100%;
+    padding: 32px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .s3-greet { font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 2px; }
+  .s3-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 16px; }
+  .carbon-card {
+    background: linear-gradient(135deg, #0FBCD4 0%, #059669 100%);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .carbon-label { font-size: 9px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .carbon-pts { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; color: #fff; line-height: 1; }
+  .carbon-sub { font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+  .carbon-bar-bg { background: rgba(255,255,255,0.2); border-radius: 4px; height: 5px; margin-top: 10px; }
+  .carbon-bar-fill { background: #fff; border-radius: 4px; height: 5px; width: 68%; }
+  .stats-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .stat-box { flex: 1; background: rgba(255,255,255,0.07); border-radius: 12px; padding: 10px 8px; text-align: center; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
+  .stat-label { font-size: 9px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+  .activity-title { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .act-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .act-item:last-child { border-bottom: none; }
+  .act-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .act-text { flex: 1; font-size: 10px; color: rgba(255,255,255,0.5); }
+  .act-pts { font-size: 10px; font-weight: 700; color: #0FBCD4; }
+  .bottom-nav { display: flex; justify-content: space-around; padding: 10px 0 0; margin-top: auto; }
+  .bnav { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 8px; color: rgba(255,255,255,0.25); }
+  .bnav.act { color: #0FBCD4; }
+  .bnav-icon { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">Cyan MX</div>
+  <div class="screen-counter" id="counter">Screen 1 of 3</div>
+</header>
+
+<div class="stage">
+  <!-- Left arrow -->
+  <div class="nav-arrow disabled" id="prev" onclick="navigate(-1)">&#8592;</div>
+
+  <!-- Phone -->
+  <div class="phone-wrap" id="phone-wrap">
+    <div class="phone">
+      <div class="phone-inner" id="screen-content"></div>
+    </div>
+    <div class="phone-glow"></div>
+  </div>
+
+  <!-- Info panel -->
+  <div class="screen-info" id="info-panel"></div>
+
+  <!-- Right arrow -->
+  <div class="nav-arrow" id="next" onclick="navigate(1)">&#8594;</div>
+</div>
+
+<!-- Dots -->
+<div class="dots" id="dots"></div>
+<div class="hint">← → arrow keys to navigate</div>
+
+<script>
+const screens = [
+  {
+    number: '01 / Subscription',
+    title: 'Choose your mobility plan',
+    desc: 'Students pick a monthly subscription that fits their campus commute. Cheaper than daily ride-hailing.',
+    features: [
+      'Three tiered plans from IDR 50K/month',
+      'Unlimited rides on Standard and Premium',
+      'Gamified carbon points on every ride',
+      'Cancel or upgrade anytime in-app',
+    ],
+    html: `
+      <div class="s1">
+        <div class="s1-logo">Cyan MX</div>
+        <div class="s1-tagline">CAMPUS CLEAN MOBILITY</div>
+        <div class="s1-title">Choose your plan</div>
+
+        <div class="plan plan-basic">
+          <div class="plan-row">
+            <div class="plan-name">Basic</div>
+            <div class="plan-price">50K <span>/ mo</span></div>
+          </div>
+          <div class="plan-desc">20 rides/month · Charging access</div>
+        </div>
+
+        <div class="plan plan-std">
+          <div class="plan-badge">MOST POPULAR</div>
+          <div class="plan-row">
+            <div class="plan-name">Standard</div>
+            <div class="plan-price">100K <span>/ mo</span></div>
+          </div>
+          <div class="plan-desc">Unlimited rides · Priority docks · Carbon points</div>
+        </div>
+
+        <div class="plan plan-prem">
+          <div class="plan-row">
+            <div class="plan-name">Premium</div>
+            <div class="plan-price">150K <span>/ mo</span></div>
+          </div>
+          <div class="plan-desc">All Standard + Shuttle priority + Cashback</div>
+        </div>
+
+        <button class="s1-btn">Continue with Standard</button>
+      </div>
+    `
+  },
+  {
+    number: '02 / Campus Map',
+    title: 'Find bikes and charging bays near you',
+    desc: 'AI-powered demand map shows real-time availability of vehicles and charging stations across campus.',
+    features: [
+      'Live vehicle and dock availability',
+      'AI demand heatmap every 30 minutes',
+      'Solar charging bay locations',
+      'One-tap unlock and ride',
+    ],
+    html: `
+      <div class="s2">
+        <div class="s2-header">
+          <div class="s2-logo">Cyan MX</div>
+          <div class="s2-search">🔍 &nbsp;Search campus location...</div>
+        </div>
+        <div class="s2-legend">
+          <div class="leg"><div class="leg-dot" style="background:#F59E0B"></div>Charging</div>
+          <div class="leg"><div class="leg-dot" style="background:#10B981"></div>Bikes</div>
+          <div class="leg"><div class="leg-dot" style="background:#185FA5"></div>You</div>
+        </div>
+        <div class="s2-map">
+          <div class="map-grid"></div>
+          <div class="map-road" style="top:42%;left:8%;width:84%;height:4px;"></div>
+          <div class="map-road" style="top:20%;left:52%;width:4px;height:68%;"></div>
+          <div class="map-road" style="top:22%;left:20%;width:32%;height:3px;"></div>
+          <div class="map-pin pin-charge" style="top:42%;left:22%;">☀️</div>
+          <div class="map-pin pin-charge" style="top:60%;left:68%;">☀️</div>
+          <div class="map-pin pin-bike" style="top:28%;left:40%;">🚲</div>
+          <div class="map-pin pin-bike" style="top:62%;left:28%;">🚲</div>
+          <div class="map-pin pin-bike" style="top:72%;left:74%;">🚲</div>
+          <div class="map-pin pin-user" style="top:48%;left:52%;">📍</div>
+          <div class="map-popup">4 bikes available nearby</div>
+        </div>
+        <div class="s2-bottom">
+          <div class="s2-section-title">Nearby</div>
+          <div class="nearby-item">
+            <div>
+              <div class="nearby-name">🚲 Gedung Rektorat Station</div>
+              <div class="nearby-sub">120m away</div>
+            </div>
+            <div class="nearby-avail">4 available</div>
+          </div>
+          <div class="nearby-item">
+            <div>
+              <div class="nearby-name">☀️ FTI Charging Bay</div>
+              <div class="nearby-sub">280m away</div>
+            </div>
+            <div class="nearby-avail">3 ports free</div>
+          </div>
+        </div>
+      </div>
+    `
+  },
+  {
+    number: '03 / Dashboard',
+    title: 'Track rides, carbon, and impact',
+    desc: 'Every ride earns carbon points. Students see their real environmental contribution, making sustainability feel rewarding.',
+    features: [
+      'Real-time carbon points balance',
+      'CO₂ savings per ride and per month',
+      'Ride history and usage stats',
+      'Rewards and redemption centre',
+    ],
+    html: `
+      <div class="s3">
+        <div class="s3-greet">Good morning,</div>
+        <div class="s3-name">Ichsan 👋</div>
+
+        <div class="carbon-card">
+          <div class="carbon-label">Carbon Points</div>
+          <div class="carbon-pts">1,240</div>
+          <div class="carbon-sub">68% to next reward tier</div>
+          <div class="carbon-bar-bg"><div class="carbon-bar-fill"></div></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-val">18</div>
+            <div class="stat-label">Rides</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">4.2kg</div>
+            <div class="stat-label">CO₂ saved</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">12km</div>
+            <div class="stat-label">Distance</div>
+          </div>
+        </div>
+
+        <div class="activity-title">Recent Activity</div>
+        <div class="act-item">
+          <div class="act-dot" style="background:#0FBCD4"></div>
+          <div class="act-text">Ride: FTI → Masjid Kampus</div>
+          <div class="act-pts">+15 pts</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot" style="background:#F59E0B"></div>
+          <div class="act-text">Charged at FTI Bay · 1.2 kWh</div>
+          <div class="act-pts">+8 pts</div>
+        </div>
+        <div class="act-item">
+          <div class="act-dot" style="background:#0FBCD4"></div>
+          <div class="act-text">Ride: Perpustakaan → FTI</div>
+          <div class="act-pts">+12 pts</div>
+        </div>
+
+        <div class="bottom-nav">
+          <div class="bnav act"><div class="bnav-icon">🏠</div>Home</div>
+          <div class="bnav"><div class="bnav-icon">🗺️</div>Map</div>
+          <div class="bnav"><div class="bnav-icon">🚲</div>Ride</div>
+          <div class="bnav"><div class="bnav-icon">🌿</div>Carbon</div>
+          <div class="bnav"><div class="bnav-icon">👤</div>Profile</div>
+        </div>
+      </div>
+    `
+  }
+];
+
+let current = 0;
+
+function render() {
+  const s = screens[current];
+
+  const wrap = document.getElementById('phone-wrap');
+  wrap.classList.add('fade-out');
+
+  setTimeout(() => {
+    document.getElementById('screen-content').innerHTML = s.html;
+    document.getElementById('counter').textContent = `Screen ${current + 1} of ${screens.length}`;
+    document.getElementById('info-panel').innerHTML = `
+      <div class="screen-number">${s.number}</div>
+      <h2 class="screen-title">${s.title}</h2>
+      <p class="screen-desc">${s.desc}</p>
+      <ul class="feature-list">
+        ${s.features.map(f => `<li><div class="feat-dot"></div>${f}</li>`).join('')}
+      </ul>
+    `;
+
+    document.getElementById('prev').classList.toggle('disabled', current === 0);
+    document.getElementById('next').classList.toggle('disabled', current === screens.length - 1);
+
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === current);
+    });
+
+    wrap.classList.remove('fade-out');
+  }, 200);
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= screens.length) return;
+  current = next;
+  render();
+}
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+screens.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 0 ? ' active' : '');
+  d.onclick = () => { current = i; render(); };
+  dotsEl.appendChild(d);
+});
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') navigate(1);
+  if (e.key === 'ArrowLeft') navigate(-1);
+});
+
+render();
+</script>
+</body>
+</html>
